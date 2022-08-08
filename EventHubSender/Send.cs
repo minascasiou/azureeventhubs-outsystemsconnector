@@ -49,6 +49,7 @@ async Task sendMicroBatchPartitionKey()
                 eventData = new EventData($"PartitionKey:{batchOptions.PartitionKey} Host:{ComputerName}Event #{ counter }:{index} Id:{Guid.NewGuid()} Timestamp:{DateTime.Now.ToString()}");
                 eventData.MessageId = Guid.NewGuid().ToString();
                 eventData.CorrelationId = Guid.NewGuid().ToString();
+                eventData.Properties.Add("BusinessEvent", "KYC.Complete");
 
                 Console.WriteLine($"PRE: Adding to Micro Batch Payload: Event to partitionKey: {batchOptions.PartitionKey} with length {eventData.EventBody.ToArray().Length}, eventBody = {eventData.EventBody}.");
 

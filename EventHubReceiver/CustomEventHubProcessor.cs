@@ -55,8 +55,10 @@ namespace MFEventHubProcessor
                 {
                     processedEventCount++;
                     //Console.WriteLine($"Event: {currentEvent.EventBody}");
-                    Console.WriteLine($"Count:{processedEventCount},MsgId {currentEvent.MessageId},CorId {currentEvent.CorrelationId},Partition {partition.PartitionId} length {currentEvent.EventBody.ToArray().Length},eventBody={currentEvent.EventBody},eventsSinceLastChkpt:TODO,forceChkpt:TODO|Elapsed:{sw.ElapsedMilliseconds}|Consumed {DateTime.Now}");
+                    Console.WriteLine($"Count:{processedEventCount},MsgId {currentEvent.MessageId},CorId {currentEvent.CorrelationId},Partition {partition.PartitionId} BusinessEvent {getBusinessEvent(currentEvent)} length {currentEvent.EventBody.ToArray().Length},eventBody={currentEvent.EventBody},eventsSinceLastChkpt:TODO,forceChkpt:TODO|Elapsed:{sw.ElapsedMilliseconds}|Consumed {DateTime.Now}");
                     //Console.WriteLine($"Event Count:{processedEventCount}, MessageId {currentEvent.MessageId}, CorrelationId {currentEvent.CorrelationId}, Event from partition {partition} with length {currentEvent.EventBody}, eventBody = {currentEvent.EventBody}, eventsSinceLastCheckpoint: {eventsSinceLastCheckpoint}, forceCheckpoint: {forceCheckpoint} | Elapsed: {sw.ElapsedMilliseconds} | Consume time = {DateTime.Now}");
+
+                    ProcessEvent(currentEvent);
 
                     lastEvent = currentEvent;
                 }
@@ -84,6 +86,40 @@ namespace MFEventHubProcessor
 
                 Console.WriteLine($"Exception while processing events: {ex}");
             }
+        }
+
+        public string getBusinessEvent(EventData currentEvent)
+        {
+            string BusinessEvent = "";
+
+            object value;
+            currentEvent.Properties.TryGetValue("BusinessEvent", out value);
+            if (value != null)
+            {
+                BusinessEvent = value.ToString();
+                return BusinessEvent;
+            }
+            else
+            {
+                return "";
+            }
+        }
+
+        private void ProcessEvent(EventData currentEvent)
+        {
+
+            string BusinessEvent = "";
+
+            object value;
+            currentEvent.Properties.TryGetValue("BusinessEvent", out value);
+            if (value != null)
+            {
+                BusinessEvent = value.ToString();
+            }
+
+            //if (currentEvent.Properties.ContainsKey("BusinessEvent")) { var BusinessEvent2 = currentEvent.Properties["BusinessEvent"]; }
+
+            //    var x = currentEvent.Properties["BusinessEvent"];
         }
 
         protected override Task OnProcessingErrorAsync(

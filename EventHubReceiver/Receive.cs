@@ -42,7 +42,8 @@ var processor = new MFCustomEventHubProcessor(
     eventHubName);
 
 using var cancellationSource = new CancellationTokenSource();
-cancellationSource.CancelAfter(TimeSpan.FromSeconds(30));
+//cancellationSource.CancelAfter(TimeSpan.FromSeconds(30));
+cancellationSource.CancelAfter(Timeout.Infinite);
 
 // Starting the processor does not block when starting; delay
 // until the cancellation token is signaled.
