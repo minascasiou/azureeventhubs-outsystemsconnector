@@ -46,23 +46,31 @@
           "dependencies": {
             "Azure.Identity": {
               "target": "Package",
-              "version": "[1.6.0, )"
+              "version": "[1.7.0, )"
             },
             "Azure.Messaging.EventHubs": {
               "target": "Package",
-              "version": "[5.7.1, )"
+              "version": "[5.7.3, )"
             },
             "Azure.Messaging.EventHubs.Processor": {
               "target": "Package",
-              "version": "[5.7.1, )"
+              "version": "[5.7.3, )"
             },
             "Azure.Security.KeyVault.Secrets": {
               "target": "Package",
-              "version": "[4.3.0, )"
+              "version": "[4.4.0, )"
             },
             "Azure.Storage.Blobs": {
               "target": "Package",
-              "version": "[12.13.0, )"
+              "version": "[12.14.0, )"
+            },
+            "Microsoft.Extensions.Configuration.Json": {
+              "target": "Package",
+              "version": "[6.0.0, )"
+            },
+            "Microsoft.Extensions.Hosting": {
+              "target": "Package",
+              "version": "[6.0.1, )"
             }
           },
           "imports": [
@@ -80,7 +88,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.302\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.305\\RuntimeIdentifierGraph.json"
         }
       }
     }

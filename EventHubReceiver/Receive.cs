@@ -14,25 +14,53 @@ using MFEventHubProcessor;
 using Azure.Security.KeyVault.Secrets;
 using Azure.Identity;
 
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using EventHubReceiver;
 
-var client = new SecretClient(vaultUri: new Uri("https://eventhubsnskeyvault.vault.azure.net/"), credential: new DefaultAzureCredential());
-
-KeyVaultSecret secret = client.GetSecret("eventHubsConnectionString");
-var eventHubsConnectionString = secret.Value;
-secret = client.GetSecret("storageConnectionString");
-var storageConnectionString = secret.Value;
+ReceiverSettings options = new();
+IHost host = GetConfig();
 
 
-var blobContainerName = "eventhubblob";
 
-var eventHubName = "eventhubtopic1";
+//var client = new SecretClient(vaultUri: new Uri(options.AkvUri), credential: new DefaultAzureCredential());
+//KeyVaultSecret secret = client.GetSecret(options.EventHubsConnectionStringConfigSettingName);
+//var eventHubsConnectionString = secret.Value;
+//var eventHubName = options.EventHubName;
+//var BatchSize = options.BatchSize; //1, 10, 1000, 5000
+//var InterBatchSleepTime = options.InterBatchSleepTime;
+//var NumberOfMessagesToSend = options.NumberOfMessagesToSend; //-1 = run forever
+//var PartitionKey = options.PartitionKey;
+//string ComputerName = System.Net.Dns.GetHostName();
+
+string eventHubsConnectionString = "";
+string storageConnectionString = "";
+
+//Read connection strings from Config file - Test/Deubgging only
+if (options.EventHubsConnectionStringOverride != "")
+{
+    eventHubsConnectionString = options.EventHubsConnectionStringOverride;
+    storageConnectionString = options.StorageAccountConnectionStringOverride;
+}
+else //Read from Azure KeyVault
+{
+    var client = new SecretClient(vaultUri: new Uri(options.AkvUri), credential: new DefaultAzureCredential());
+
+    KeyVaultSecret secret = client.GetSecret(options.EventHubsConnectionStringConfigSettingName);
+    eventHubsConnectionString = secret.Value;
+    secret = client.GetSecret(options.StorageAccountConnectionStringConfigSettingName);
+    storageConnectionString = secret.Value;
+}
+var blobContainerName = options.StorageAccountBlobContainerNameConfigSettingName;
+
+var eventHubName = options.EventHubName;
 var consumerGroup = EventHubConsumerClient.DefaultConsumerGroupName;
 
 var storageClient = new BlobContainerClient(
     storageConnectionString,
     blobContainerName);
 
-var maximumBatchSize = 1000;
+var maximumBatchSize = options.MaximumBatchSize;
 
 var processor = new MFCustomEventHubProcessor(
     storageClient,
@@ -52,6 +80,10 @@ try
 {
     await processor.StartProcessingAsync(cancellationSource.Token);
     await Task.Delay(Timeout.Infinite, cancellationSource.Token);
+    //await Task.Delay(TimeSpan.FromSeconds(30), cancellationSource.Token);
+
+    //await host.RunAsync(cancellationSource.Token);
+
 }
 catch (TaskCanceledException)
 {
@@ -63,6 +95,41 @@ finally
     // Stopping may take up to the length of time defined
     // as the TryTimeout configured for the processor;
     // By default, this is 60 seconds.
-
     await processor.StopProcessingAsync();
+}
+
+
+//Read settings from Configuration file & run
+IHost GetConfig()
+{
+    //Read settings from appsettings.json file
+    using IHost host = Host.CreateDefaultBuilder(args)
+        .ConfigureAppConfiguration((hostingContext, configuration) =>
+        {
+            configuration.Sources.Clear();
+
+            IHostEnvironment env = hostingContext.HostingEnvironment;
+
+            configuration
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
+
+            IConfigurationRoot configurationRoot = configuration.Build();
+
+
+            configurationRoot.GetSection(nameof(ReceiverSettings))
+                             .Bind(options);
+
+            Console.WriteLine($"Azure Keyvalue URI={options.AkvUri}");
+            Console.WriteLine($"EventHubsConnectionStringConfigSettingName={options.EventHubsConnectionStringConfigSettingName}");
+            Console.WriteLine($"EventHubName={options.EventHubName}");
+            Console.WriteLine($"BatchSize={options.MaximumBatchSize}");
+
+            Console.WriteLine($"EventHubsConnectionStringOverride={options.EventHubsConnectionStringOverride}");
+            Console.WriteLine($"StorageAccountConnectionStringOverride={options.StorageAccountConnectionStringOverride}");
+
+        })
+        .Build();
+
+    return host;
 }

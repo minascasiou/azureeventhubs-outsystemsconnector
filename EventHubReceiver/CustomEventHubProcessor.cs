@@ -54,9 +54,38 @@ namespace MFEventHubProcessor
                 foreach (var currentEvent in events)
                 {
                     processedEventCount++;
+
+                    var ConsumedTimestamp = DateTime.Now; //.ToString("yyyy-MM-ddTHH:mm:ss.ffffff");
+                    var ConsumedTimestampString = ConsumedTimestamp.ToString("yyyy-MM-ddTHH:mm:ss.ffffff");
+
+                    string ProducerSentTimestampString = "";
+                    DateTime ProducerSentTimestamp;
+                    TimeSpan latency;
+
+                    object value;
+                    currentEvent.Properties.TryGetValue("ProducerSentTimestamp", out value);
+                    if (value != null)
+                    {
+                        ProducerSentTimestampString = value.ToString();
+                        ProducerSentTimestamp = DateTime.Parse(ProducerSentTimestampString);
+                        latency = ConsumedTimestamp - ProducerSentTimestamp;
+
+                        Console.WriteLine($"Count:{processedEventCount},MsgId {currentEvent.MessageId},CorId {currentEvent.CorrelationId},Partition {partition.PartitionId} BusinessEvent {getBusinessEvent(currentEvent)} length {currentEvent.EventBody.ToArray().Length},eventBody={currentEvent.EventBody}, EHServerEnqueuedTime={currentEvent.EnqueuedTime} eventsSinceLastChkpt:TODO,forceChkpt:TODO|Elapsed:{sw.ElapsedMilliseconds}|Consumed {ConsumedTimestamp} Latency={latency.TotalMilliseconds}");
+                    }
+                    else
+                    { 
+                        Console.WriteLine($"Count:{processedEventCount},MsgId {currentEvent.MessageId},CorId {currentEvent.CorrelationId},Partition {partition.PartitionId} BusinessEvent {getBusinessEvent(currentEvent)} length {currentEvent.EventBody.ToArray().Length},eventBody={currentEvent.EventBody}, EHServerEnqueuedTime={currentEvent.EnqueuedTime} eventsSinceLastChkpt:TODO,forceChkpt:TODO|Elapsed:{sw.ElapsedMilliseconds}|Consumed {ConsumedTimestamp} Latency=Not Specified by Sender");
+                    }
+
+                    //string ProducerSentTimestampString = (string)currentEvent.Properties["Diagnostics.ProducerSentTimestamp"]; //, ProducerSentTimestamp);
                     //Console.WriteLine($"Event: {currentEvent.EventBody}");
-                    Console.WriteLine($"Count:{processedEventCount},MsgId {currentEvent.MessageId},CorId {currentEvent.CorrelationId},Partition {partition.PartitionId} BusinessEvent {getBusinessEvent(currentEvent)} length {currentEvent.EventBody.ToArray().Length},eventBody={currentEvent.EventBody},eventsSinceLastChkpt:TODO,forceChkpt:TODO|Elapsed:{sw.ElapsedMilliseconds}|Consumed {DateTime.Now}");
+                    //Console.WriteLine($"Count:{processedEventCount},MsgId {currentEvent.MessageId},CorId {currentEvent.CorrelationId},Partition {partition.PartitionId} BusinessEvent {getBusinessEvent(currentEvent)} length {currentEvent.EventBody.ToArray().Length},eventBody={currentEvent.EventBody},eventsSinceLastChkpt:TODO,forceChkpt:TODO|Elapsed:{sw.ElapsedMilliseconds}|Consumed {DateTime.Now}");
+                    //Console.WriteLine($"Count:{processedEventCount},MsgId {currentEvent.MessageId},CorId {currentEvent.CorrelationId},Partition {partition.PartitionId} BusinessEvent {getBusinessEvent(currentEvent)} length {currentEvent.EventBody.ToArray().Length},eventBody={currentEvent.EventBody}, EHServerEnqueuedTime={currentEvent.EnqueuedTime} eventsSinceLastChkpt:TODO,forceChkpt:TODO|Elapsed:{sw.ElapsedMilliseconds}|Consumed {ConsumedTimestampString} Latency={(DateTime.Now - currentEvent.EnqueuedTime).TotalMilliseconds}");
+                    //Console.WriteLine($"Count:{processedEventCount},MsgId {currentEvent.MessageId},CorId {currentEvent.CorrelationId},Partition {partition.PartitionId} BusinessEvent {getBusinessEvent(currentEvent)} length {currentEvent.EventBody.ToArray().Length},eventBody={currentEvent.EventBody}, EHServerEnqueuedTime={currentEvent.EnqueuedTime} eventsSinceLastChkpt:TODO,forceChkpt:TODO|Elapsed:{sw.ElapsedMilliseconds}|Consumed {ConsumedTimestamp} Latency={latency.TotalMilliseconds}");
                     //Console.WriteLine($"Event Count:{processedEventCount}, MessageId {currentEvent.MessageId}, CorrelationId {currentEvent.CorrelationId}, Event from partition {partition} with length {currentEvent.EventBody}, eventBody = {currentEvent.EventBody}, eventsSinceLastCheckpoint: {eventsSinceLastCheckpoint}, forceCheckpoint: {forceCheckpoint} | Elapsed: {sw.ElapsedMilliseconds} | Consume time = {DateTime.Now}");
+
+                    //TimeSpan latency = DateTime.Now - currentEvent.EnqueuedTime;
+                    //latency.TotalMilliseconds;
 
                     ProcessEvent(currentEvent);
 
@@ -116,6 +145,8 @@ namespace MFEventHubProcessor
             {
                 BusinessEvent = value.ToString();
             }
+            //call API/Do Something and wait for a response ...
+            //
 
             //if (currentEvent.Properties.ContainsKey("BusinessEvent")) { var BusinessEvent2 = currentEvent.Properties["BusinessEvent"]; }
 
